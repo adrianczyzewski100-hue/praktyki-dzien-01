@@ -1,0 +1,8 @@
+dzien.1
+przypomnialem dzialania na listach
+wszystko dziala
+
+dzien.2
+nauczylem sie dzialacz plikami
+ciezkie bylo tworzenie id aby sie nie powtarzalo
+wszystko dziala
