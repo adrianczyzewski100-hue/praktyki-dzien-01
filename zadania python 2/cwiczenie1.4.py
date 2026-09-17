@@ -1,0 +1,7 @@
+zdanie = input("Podaj zdanie: ")
+liczba_znakow = len(zdanie)
+print(f"Liczba znaków w zdaniu: {liczba_znakow}")
+liczba_slow = len(zdanie.split())
+print(f"Liczba słów w zdaniu: {liczba_slow}")
+ile_a = zdanie.count("a")
+print(f"Liczba wystąpień litery 'a' w zdaniu: {ile_a}")
