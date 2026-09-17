@@ -1,1 +1,2 @@
-# praktyki-dzien-01
+Helpdesk Lite
+pobierz i uruchom program w visual studio code
