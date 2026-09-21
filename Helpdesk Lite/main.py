@@ -1,27 +1,76 @@
-<<<<<<< HEAD
-tickets = []
-next_id = 1   # globalny licznik ID
+import json
+import os
 
+tickets = []
+next_id = 1
+
+#zapisywanie i czytywanie pliku
+
+def load_tickets_from_file():
+    global next_id
+
+    if not os.path.exists("tickets.json"):
+        print("Plik tickets.json nie istnieje — zaczynam od pustej listy.")
+        return
+
+    try:
+        with open("tickets.json", "r") as file:
+            data = json.load(file)
+
+            tickets.clear()
+            tickets.extend(data)
+
+            if tickets:
+                next_id = max(ticket["id"] for ticket in tickets) + 1
+            else:
+                next_id = 1
+
+            print("Tickety wczytane poprawnie.")
+
+    except json.JSONDecodeError:
+        print("Błąd: plik JSON jest uszkodzony. Zaczynam od pustej listy.")
+
+
+def save_tickets_to_file():
+    with open("tickets.json", "w") as file:
+        json.dump(tickets, file, indent=4)
+    print("Tickety zapisane do pliku.")
+
+#operacje na ticketach
 
 def add_ticket():
     global next_id
 
-    id = next_id
-    next_id += 1
+    user = input("Podaj nazwę użytkownika: ").strip()
+    if user == "":
+        print("Błąd: nazwa użytkownika nie może być pusta.")
+        return
 
-    user = input("Podaj nazwę użytkownika: ")
-    problem = input("Podaj opis problemu: ")
-    status = input("Podaj status ticketu: ")
+    problem = input("Podaj opis problemu: ").strip()
+    if problem == "":
+        print("Błąd: opis problemu nie może być pusty.")
+        return
+
+    status = input("Podaj status ticketu: ").strip()
+    priority = input("Podaj priorytet (low/medium/high): ").strip().lower()
+
+    if priority not in ["low", "medium", "high"]:
+        print("Błąd: priorytet musi być low/medium/high.")
+        return
 
     ticket = {
-        "id": id,
+        "id": next_id,
         "user": user,
         "problem": problem,
-        "status": status
+        "status": status,
+        "priority": priority
     }
 
     tickets.append(ticket)
-    print(f"Ticket {id} został dodany.")
+    next_id += 1
+
+    save_tickets_to_file()
+    print(f"Ticket {ticket['id']} został dodany.")
 
 
 def find_ticket(id):
@@ -35,7 +84,19 @@ def change_status(id, new_status):
     ticket = find_ticket(id)
     if ticket:
         ticket["status"] = new_status
+        save_tickets_to_file()
         print(f"Status ticketu {id} został zmieniony na {new_status}.")
+    else:
+        print(f"Nie znaleziono ticketu o ID {id}.")
+
+
+def delete_ticket(id):
+    global tickets
+    ticket = find_ticket(id)
+    if ticket:
+        tickets = [t for t in tickets if t["id"] != id]
+        save_tickets_to_file()
+        print(f"Ticket {id} został usunięty.")
     else:
         print(f"Nie znaleziono ticketu o ID {id}.")
 
@@ -45,55 +106,25 @@ def show_tickets():
         print("Brak ticketów do wyświetlenia.")
     else:
         for ticket in tickets:
-            print(f"ID: {ticket['id']}, Użytkownik: {ticket['user']}, Problem: {ticket['problem']}, Status: {ticket['status']}")
+            print(f"ID: {ticket['id']}, "
+                  f"Użytkownik: {ticket['user']}, "
+                  f"Problem: {ticket['problem']}, "
+                  f"Status: {ticket['status']}, "
+                  f"Priorytet: {ticket['priority']}")
 
-
-def save_tickets_to_file():
-    with open("tickets.txt", "w") as file:
-        for ticket in tickets:
-            file.write(f"{ticket['id']},{ticket['user']},{ticket['problem']},{ticket['status']}\n")
-    print("Tickety zapisane do pliku.")
-
-
-def load_tickets_from_file():
-    global next_id
-    try:
-        with open("tickets.txt", "r") as file:
-            tickets.clear()
-            max_id = 0
-
-            for line in file:
-                id, user, problem, status = line.strip().split(",")
-                id = int(id)
-
-                ticket = {
-                    "id": id,
-                    "user": user,
-                    "problem": problem,
-                    "status": status
-                }
-                tickets.append(ticket)
-
-                if id > max_id:
-                    max_id = id
-
-            next_id = max_id + 1
-            print("Tickety wczytane poprawnie.")
-
-    except FileNotFoundError:
-        print("Plik tickets.txt nie istnieje — zaczynam od pustej listy.")
-
+            #menu
 
 def menu():
+    load_tickets_from_file()
+
     while True:
         print("\nMenu:")
         print("1. Dodaj ticket")
         print("2. Znajdź ticket po ID")
         print("3. Zmień status ticketu")
         print("4. Wyświetl wszystkie tickety")
-        print("5. Zapisz tickety do pliku")
-        print("6. Wczytaj tickety z pliku")
-        print("7. Wyjście")
+        print("5. Usuń ticket")
+        print("6. Wyjście")
 
         choice = input("Wybierz opcję: ")
 
@@ -109,7 +140,7 @@ def menu():
 
             ticket = find_ticket(id)
             if ticket:
-                print(f"ID: {ticket['id']}, Użytkownik: {ticket['user']}, Problem: {ticket['problem']}, Status: {ticket['status']}")
+                print(ticket)
             else:
                 print(f"Nie znaleziono ticketu o ID {id}.")
 
@@ -127,12 +158,15 @@ def menu():
             show_tickets()
 
         elif choice == "5":
-            save_tickets_to_file()
+            try:
+                id = int(input("Podaj ID ticketu do usunięcia: "))
+            except ValueError:
+                print("Błąd: wpisano tekst zamiast liczby.")
+                continue
+
+            delete_ticket(id)
 
         elif choice == "6":
-            load_tickets_from_file()
-
-        elif choice == "7":
             print("Koniec programu.")
             break
 
@@ -141,38 +175,3 @@ def menu():
 
 
 menu()
-=======
-tickets = []
-def dodaj_ticket(id,user,problem,status):
-    #zwiekszanie id z kazdym dodaniem ticketu
-    id = len(tickets) + 1
-
-    user = input("Podaj nazwę użytkownika: ")
-
-    problem = input("Podaj opis problemu: ")
-
-    status = input("Podaj status ticketu: ")
-
-    ticket = {
-        "id": id,
-        "user": user,
-        "problem": problem,
-        "status": status
-    }
-
-    tickets.append(ticket)
-    print(f"Ticket {id} został dodany.")
-
-def wyswietl_tickets():
-    if len(tickets) == 0:
-        print("Brak ticketów do wyświetlenia.")
-    else:
-        for ticket in tickets:
-            print(f"ID: {ticket['id']}, Użytkownik: {ticket['user']}, Problem: {ticket['problem']}, Status: {ticket['status']}")
-
-            
-dodaj_ticket(None, None, None, None)
-dodaj_ticket(None, None, None, None)
-dodaj_ticket(None, None, None, None)
-wyswietl_tickets()
->>>>>>> e646a3e87b80409923b3a0889b8e054ab2c7274f

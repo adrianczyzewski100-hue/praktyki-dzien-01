@@ -1,0 +1,23 @@
+[
+    {
+        "id": 2,
+        "user": "Jan kowalski",
+        "problem": "nie dziala drukarka",
+        "status": "open",
+        "priority": "low"
+    },
+    {
+        "id": 3,
+        "user": "Anna",
+        "problem": "nie dziala myszka",
+        "status": "open",
+        "priority": "medium"
+    },
+    {
+        "id": 4,
+        "user": "Adam",
+        "problem": "nie dziala komputer",
+        "status": "closed",
+        "priority": "high"
+    }
+]

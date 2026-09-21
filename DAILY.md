@@ -6,3 +6,8 @@ dzien.2
 nauczylem sie dzialacz plikami
 ciezkie bylo tworzenie id aby sie nie powtarzalo
 wszystko dziala
+
+dzien.3
+nauczylem sie pracy z plikami .JSON
+trudno bylo zmieniac kod
+wszystko dziala
