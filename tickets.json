@@ -19,5 +19,12 @@
         "problem": "nie dziala komputer",
         "status": "closed",
         "priority": "high"
+    },
+    {
+        "id": 5,
+        "user": "adam",
+        "problem": "nie dziala drukarka",
+        "status": "open",
+        "priority": "low"
     }
 ]
