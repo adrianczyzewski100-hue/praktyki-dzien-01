@@ -1,2 +1,2 @@
-TICKETS_FILE ="tickets.json"
-PRIORITIES = ["low","medium","high"]
+TICKETS_FILE = "tickets.json"
+PRIORITIES = ["low", "medium", "high"]

@@ -13,6 +13,6 @@ def load_tickets():
         print("Błąd: plik JSON jest uszkodzony. Zaczynam od pustej listy.")
         return []
 
-def save_tickets(tickets):
+def save_tickets(tickets_dict_list):
     with open(TICKETS_FILE, "w") as file:
-        json.dump(tickets, file, indent=4)
+        json.dump(tickets_dict_list, file, indent=4)
