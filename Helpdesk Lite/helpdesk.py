@@ -52,7 +52,7 @@ class Helpdesk:
     def get_all_tickets(self):
         """zwraca listę wszystkich ticketów."""
         return self.tickets
-
+#
     def filter_tickets(self, status=None, priority=None):
         """filtruje tickety według podanego statusu lub priorytetu."""
         result = self.tickets
