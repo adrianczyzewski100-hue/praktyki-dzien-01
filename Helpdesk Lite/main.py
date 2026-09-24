@@ -20,9 +20,10 @@ def display_menu():
     print("2. Znajdź ticket po ID")
     print("3. Zmień status ticketu")
     print("4. Wyświetl wszystkie tickety")
-    print("5. Usuń ticket")
-    print("6. Filtruj tickety")
-    print("7. Wyjście")
+    print("5. Wyświetl tylko otwarte tickety")
+    print("6. Filtruj i sortuj tickety")
+    print("7. Usuń ticket")
+    print("8. Wyjście")
 
 def handle_add(helpdesk):
     """obsługuje interaktywny proces dodawania nowego ticketu."""
@@ -42,7 +43,7 @@ def handle_add(helpdesk):
         return
 
     ticket = helpdesk.add_ticket(user, description, priority)
-    print(f"Ticket {ticket.id} został dodany.")
+    print(f"Ticket {ticket.id} został dodany z datą: {ticket.created_at}")
 
 def handle_find(helpdesk):
     """obsługuje wyszukiwanie ticketu po id."""
@@ -70,6 +71,44 @@ def handle_show_all(helpdesk):
     for t in tickets:
         print(t)
 
+def handle_show_open(helpdesk):
+    """wyświetla wyłącznie otwarte zgłoszenia."""
+    tickets = helpdesk.get_open_tickets()
+    if not tickets:
+        print("Brak otwartych ticketów.")
+        return
+    for t in tickets:
+        print(t)
+
+def handle_filter_and_sort(helpdesk):
+    """obsługuje filtrowanie oraz opcjonalne sortowanie zgłoszeń."""
+    status = input("Podaj status do filtrowania (lub enter aby pominąć): ").strip()
+    priority = input("Podaj priorytet do filtrowania (low/medium/high lub enter): ").strip()
+    open_only = input("Czy pokazać tylko otwarte? (t/n): ").strip().lower() == "t"
+
+    filtered = helpdesk.filter_tickets(
+        status=status if status else None,
+        priority=priority if priority else None,
+        open_only=open_only
+    )
+
+    print("\nOpcje sortowania:")
+    print("1. Sortuj po dacie utworzenia")
+    print("2. Sortuj po priorytecie (high -> low)")
+    print("3. Bez sortowania")
+    sort_choice = input("Wybierz opcję sortowania: ").strip()
+
+    if sort_choice == "1":
+        filtered = helpdesk.sort_tickets(filtered, by="created_at")
+    elif sort_choice == "2":
+        filtered = helpdesk.sort_tickets(filtered, by="priority")
+
+    if not filtered:
+        print("Brak ticketów spełniających kryteria.")
+        return
+    for t in filtered:
+        print(t)
+
 def handle_delete(helpdesk):
     """obsługuje usuwanie zgłoszenia z bazy."""
     ticket_id = get_ticket_id("Podaj ID ticketu do usunięcia: ")
@@ -78,21 +117,6 @@ def handle_delete(helpdesk):
             print(f"Ticket {ticket_id} został usunięty.")
         else:
             print("Nie znaleziono ticketu.")
-
-def handle_filter(helpdesk):
-    """obsługuje filtrowanie zgłoszeń według statusu i/lub priorytetu."""
-    status = input("Podaj status do filtrowania (lub enter aby pominąć): ").strip()
-    priority = input("Podaj priorytet do filtrowania (low/medium/high lub enter): ").strip()
-
-    filtered = helpdesk.filter_tickets(
-        status=status if status else None,
-        priority=priority if priority else None
-    )
-    if not filtered:
-        print("Brak ticketów spełniających kryteria.")
-        return
-    for t in filtered:
-        print(t)
 
 def main():
     """główna pętla sterująca aplikacją."""
@@ -103,15 +127,16 @@ def main():
         "2": lambda: handle_find(helpdesk),
         "3": lambda: handle_change_status(helpdesk),
         "4": lambda: handle_show_all(helpdesk),
-        "5": lambda: handle_delete(helpdesk),
-        "6": lambda: handle_filter(helpdesk),
+        "5": lambda: handle_show_open(helpdesk),
+        "6": lambda: handle_filter_and_sort(helpdesk),
+        "7": lambda: handle_delete(helpdesk),
     }
 
     while True:
         display_menu()
         choice = input("Wybierz opcję: ")
 
-        if choice == "7":
+        if choice == "8":
             print("Koniec programu.")
             break
         elif choice in actions:
