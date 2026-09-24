@@ -12,5 +12,12 @@
         "description": "nie dziala laptop",
         "status": "open",
         "priority": "high"
+    },
+    {
+        "id": 3,
+        "user": "Antek",
+        "description": "nie dziala telefon",
+        "status": "closed",
+        "priority": "high"
     }
 ]

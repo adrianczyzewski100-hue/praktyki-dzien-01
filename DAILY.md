@@ -11,3 +11,8 @@ dzien.3
 nauczylem sie pracy z plikami .JSON
 trudno bylo zmieniac kod
 wszystko dziala
+
+dzien.6
+poprawiona czytelnosc kodu
+funkcja filtrowanie
+nie mozna bylo zepsuc tickety.py i main.py

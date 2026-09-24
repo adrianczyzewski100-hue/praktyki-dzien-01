@@ -1,18 +1,28 @@
+"""
+moduł odpowiedzialny za operacje wejścia/wyjścia na plikach json.
+"""
+
 import json
 import os
 from config import TICKETS_FILE
 
-def load_tickets():
-    if not os.path.exists(TICKETS_FILE):
-        return []
+class Storage:
+    """klasa obsługująca odczyt i zapis danych z/do pliku json."""
+    def __init__(self, filename=TICKETS_FILE):
+        self.filename = filename
 
-    try:
-        with open(TICKETS_FILE, "r") as file:
-            return json.load(file)
-    except json.JSONDecodeError:
-        print("Błąd: plik JSON jest uszkodzony. Zaczynam od pustej listy.")
-        return []
+    def load(self):
+        """wczytuje listę słowników z pliku json. zwraca pustą listę w przypadku błędu."""
+        if not os.path.exists(self.filename):
+            return []
+        try:
+            with open(self.filename, "r", encoding="utf-8") as file:
+                return json.load(file)
+        except json.JSONDecodeError:
+            # w przypadku uszkodzonego pliku json zwracamy pustą listę
+            return []
 
-def save_tickets(tickets_dict_list):
-    with open(TICKETS_FILE, "w") as file:
-        json.dump(tickets_dict_list, file, indent=4)
+    def save(self, data):
+        """zapisuje przekazaną strukturę danych do pliku json."""
+        with open(self.filename, "w", encoding="utf-8") as file:
+            json.dump(data, file, indent=4, ensure_ascii=False)

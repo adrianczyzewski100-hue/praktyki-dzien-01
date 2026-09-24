@@ -1,8 +1,12 @@
-from storage import load_tickets, save_tickets
-from validators import validate_user, validate_description, validate_priority
+"""
+moduł reprezentujący pojedyncze zgłoszenie (ticket) w systemie helpdesk.
+"""
+
+from validators import validate_priority
 
 class Ticket:
-    def __init__(self, id, user, description, status, priority):
+    """klasa reprezentująca dane i zachowanie pojedynczego ticketu."""
+    def __init__(self, id, user, description, status="open", priority="low"):
         self.id = id
         self.user = user
         self.description = description
@@ -10,84 +14,41 @@ class Ticket:
         self.priority = priority
 
     def close(self):
+        """zamyka zgłoszenie, zmieniając jego status na closed."""
         self.status = "closed"
 
     def change_priority(self, new_priority):
+        """zmienia priorytet zgłoszenia po wcześniejszej walidacji."""
         if validate_priority(new_priority):
             self.priority = new_priority
-        else:
-            print("Błąd: priorytet musi być low/medium/high.")
+            return True
+        return False
+
+    def to_dict(self):
+        """konwertuje obiekt ticketu na słownik gotowy do zapisu w json."""
+        return {
+            "id": self.id,
+            "user": self.user,
+            "description": self.description,
+            "status": self.status,
+            "priority": self.priority
+        }
+
+    @staticmethod
+    def from_dict(data):
+        """tworzy obiekt ticketu na podstawie słownika wczytanego z json."""
+        return Ticket(
+            id=data["id"],
+            user=data["user"],
+            description=data["description"],
+            status=data["status"],
+            priority=data["priority"]
+        )
 
     def __str__(self):
+        """zwraca czytelną reprezentację tekstową ticketu."""
         return (f"Ticket {self.id}: "
                 f"user={self.user}, "
                 f"description={self.description}, "
                 f"status={self.status}, "
                 f"priority={self.priority}")
-
-
-# --- Lista ticketów wczytana z pliku ---
-tickets = [Ticket(**t) for t in load_tickets()]
-next_id = max((t.id for t in tickets), default=0) + 1
-
-
-def add_ticket():
-    global next_id
-
-    user = input("Podaj nazwę użytkownika: ").strip()
-    if not validate_user(user):
-        print("Błąd: nazwa użytkownika nie może być pusta.")
-        return
-
-    description = input("Podaj opis problemu: ").strip()
-    if not validate_description(description):
-        print("Błąd: opis problemu nie może być pusty.")
-        return
-
-    status = input("Podaj status ticketu: ").strip()
-    priority = input("Podaj priorytet (low/medium/high): ").strip().lower()
-
-    if not validate_priority(priority):
-        print("Błąd: priorytet musi być low/medium/high.")
-        return
-
-    ticket = Ticket(next_id, user, description, status, priority)
-    tickets.append(ticket)
-    next_id += 1
-
-    save_tickets([t.__dict__ for t in tickets])
-    print(f"Ticket {ticket.id} został dodany.")
-
-
-def find_ticket(id):
-    return next((t for t in tickets if t.id == id), None)
-
-
-def change_status(id, new_status):
-    ticket = find_ticket(id)
-    if ticket:
-        ticket.status = new_status
-        save_tickets([t.__dict__ for t in tickets])
-        print(f"Status ticketu {id} został zmieniony.")
-    else:
-        print("Nie znaleziono ticketu.")
-
-
-def delete_ticket(id):
-    global tickets
-    ticket = find_ticket(id)
-    if ticket:
-        tickets = [t for t in tickets if t.id != id]
-        save_tickets([t.__dict__ for t in tickets])
-        print(f"Ticket {id} został usunięty.")
-    else:
-        print("Nie znaleziono ticketu.")
-
-
-def show_tickets():
-    if not tickets:
-        print("Brak ticketów.")
-        return
-
-    for t in tickets:
-        print(t)
