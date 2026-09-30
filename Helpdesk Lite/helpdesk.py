@@ -1,7 +1,8 @@
 """
 moduł logiki biznesowej zarządzający kolekcją ticketów.
 """
-
+import csv
+from datetime import datetime
 from tickets import Ticket
 from storage import Storage
 
@@ -87,3 +88,31 @@ class Helpdesk:
         elif by == "priority":
             result.sort(key=lambda t: PRIORITY_ORDER.get(t.priority.lower(), 99), reverse=reverse)
         return result
+
+    def export_to_csv(self, open_only=False):
+        """generuje raport w formacie csv czytelnym dla programu excel."""
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        suffix = "otwarte" if open_only else "wszystkie"
+        filename = f"raport ticketow_{suffix}_{timestamp}.csv"
+
+        tickets_to_export = self.get_open_tickets() if open_only else self.get_all_tickets()
+        #naglowki czytelne dla czlowieka w jezyku polskim
+        headers = ["ID", "Użytkownik", "Opis", "Status", "priorytet", "Data utworzenia", "Data zamknięcia"]
+
+        #uzycie utf-8-sig oraz separatora ";" ulatwia automatyczne otwarcie w excelu
+        with open(filename, "w", newline="", encoding="utf-8-sig") as file:
+            writer = csv.writer(file, delimiter=";")
+            writer.writerow(headers)
+
+            for t in tickets_to_export:
+                writer.writerow([
+                    t.id,
+                    t.user,
+                    t.description,
+                    t.status,
+                    t.priority,
+                    t.created_at,
+                    t.closed_at if t.closed_at else ""
+                ])
+
+        return filename, len(tickets_to_export)

@@ -25,5 +25,14 @@
         "priority": "medium",
         "created_at": "2026-09-24 10:30:55",
         "closed_at": "2026-09-24 10:31:21"
+    },
+    {
+        "id": 5,
+        "user": "albert",
+        "description": "nie dziala laptop",
+        "status": "open",
+        "priority": "high",
+        "created_at": "2026-09-30 09:35:29",
+        "closed_at": null
     }
 ]

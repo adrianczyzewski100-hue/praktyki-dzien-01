@@ -23,7 +23,8 @@ def display_menu():
     print("5. Wyświetl tylko otwarte tickety")
     print("6. Filtruj i sortuj tickety")
     print("7. Usuń ticket")
-    print("8. Wyjście")
+    print("8. Exportuj ticket")
+    print("9. Wyjście")
 
 def handle_add(helpdesk):
     """obsługuje interaktywny proces dodawania nowego ticketu."""
@@ -118,6 +119,12 @@ def handle_delete(helpdesk):
         else:
             print("Nie znaleziono ticketu.")
 
+def handle_export(helpdesk):
+    """obsługuje eksportowanie zgłoszeń do pliku csv."""
+    open_only = input("czy wyeksportowac tylko otwarte zgloszenia? (t/n): ").strip().lower() == "t"
+    filename, count = helpdesk.export_to_csv(open_only=open_only)
+    print(f"pomyslnie wyeksportowano {count} zgloszen do pliku: {filename}")
+
 def main():
     """główna pętla sterująca aplikacją."""
     helpdesk = Helpdesk()
@@ -130,13 +137,14 @@ def main():
         "5": lambda: handle_show_open(helpdesk),
         "6": lambda: handle_filter_and_sort(helpdesk),
         "7": lambda: handle_delete(helpdesk),
+        "8": lambda: handle_export(helpdesk),
     }
 
     while True:
         display_menu()
         choice = input("Wybierz opcję: ")
 
-        if choice == "8":
+        if choice == "9":
             print("Koniec programu.")
             break
         elif choice in actions:

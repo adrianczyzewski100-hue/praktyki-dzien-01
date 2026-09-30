@@ -1,1 +1,1 @@
-
+aby zrobic export pliku nalezy wybrac opje 8 nastepnie wybrac czy eksportowac tylko tickety otwarte czy wszystkie
