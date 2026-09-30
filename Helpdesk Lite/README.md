@@ -1,26 +1,33 @@
-Helpdesk Lite v0.5
-system do zarzadzania zgloszeniami w konsoli
+# Helpdesk Lite v0.5 (SQLite Edition)
 
-wymagania
+system do zarządzania zgłoszeniami w konsoli z obsługą bazy danych SQLite3.
+
+## wymagania
+
 - python 3.8 lub nowszy
-- brak zewsnetrznych bibliotek
+- wbudowany moduł sqlite3 (standard w pythonie)
 
-instalacja i uruchomienie
+## instalacja i uruchomienie
+
 1. pobierz lub sklonuj repozytorium
-2. uruchom aplikacje:
+
+2. uruchom aplikację:
    python main.py
 
-funkcje
-- dodawanie nowych ticketow
-- wyszukiwanie zgloszen po id
-- zmiana statusu zgloszenia
-- filtrowanie oraz sortowanie zgloszen
-- usuwanie zgloszen
-- eksport zgloszen do pliku CSV z kodowaniem utf-8-sig pod program excel
+## funkcje
 
-struktura plikow
-- main.py - interfejs konsolowy
-- helpdesk.py - logika biznesowa i eksport danych
-- ticket.py - model zgloszenia
-- storage.py - zapis i odczyt z pliku json
-- validators.py - walidacja dancyh wejsciowych
+- przechowywanie danych w bazie SQLite (`helpdesk.db`)
+- dodawanie nowych ticketów (`INSERT`)
+- szybkie wyszukiwanie pojedynczych zgłoszeń po ID (`SELECT ... WHERE id = ?`)
+- zmiana statusu zgłoszenia (`UPDATE`)
+- filtrowanie i sortowanie bezpośrednio w bazie SQL
+- usuwanie zgłoszeń (`DELETE`)
+- eksport zgłoszeń do pliku CSV z kodowaniem UTF-8-SIG pod program Excel
+
+## struktura plików
+
+- `main.py` - interfejs konsolowy
+- `helpdesk.py` - logika biznesowa
+- `database.py` - obsługa połączenia i zapytań SQL do bazy danych
+- `ticket.py` - model zgłoszenia
+- `validators.py` - walidacja danych wejściowych
