@@ -15,7 +15,7 @@ def get_ticket_id(message):
 
 def display_menu():
     """wyświetla opcje menu głównego."""
-    print("\nMenu:")
+    print("\nMenu Helpdesk Lite v0.5:")
     print("1. Dodaj ticket")
     print("2. Znajdź ticket po ID")
     print("3. Zmień status ticketu")
@@ -23,7 +23,7 @@ def display_menu():
     print("5. Wyświetl tylko otwarte tickety")
     print("6. Filtruj i sortuj tickety")
     print("7. Usuń ticket")
-    print("8. Exportuj ticket")
+    print("8. Eksportuj raport do CSV")
     print("9. Wyjście")
 
 def handle_add(helpdesk):
@@ -57,7 +57,7 @@ def handle_change_status(helpdesk):
     """obsługuje zmianę statusu zgłoszenia."""
     ticket_id = get_ticket_id("Podaj ID ticketu: ")
     if ticket_id is not None:
-        new_status = input("Podaj nowy status: ")
+        new_status = input("Podaj nowy status (np. closed/open): ").strip()
         if helpdesk.change_status(ticket_id, new_status):
             print(f"Status ticketu {ticket_id} został zmieniony.")
         else:
@@ -121,14 +121,13 @@ def handle_delete(helpdesk):
 
 def handle_export(helpdesk):
     """obsługuje eksportowanie zgłoszeń do pliku csv."""
-    open_only = input("czy wyeksportowac tylko otwarte zgloszenia? (t/n): ").strip().lower() == "t"
+    open_only = input("Czy wyeksportować tylko otwarte zgłoszenia? (t/n): ").strip().lower() == "t"
     filename, count = helpdesk.export_to_csv(open_only=open_only)
-    print(f"pomyslnie wyeksportowano {count} zgloszen do pliku: {filename}")
+    print(f"Pomyślnie wyeksportowano {count} zgłoszeń do pliku: {filename}")
 
 def main():
     """główna pętla sterująca aplikacją."""
     helpdesk = Helpdesk()
-    # mapa akcji przypisująca wybór z menu do odpowiednich funkcji
     actions = {
         "1": lambda: handle_add(helpdesk),
         "2": lambda: handle_find(helpdesk),
@@ -142,7 +141,7 @@ def main():
 
     while True:
         display_menu()
-        choice = input("Wybierz opcję: ")
+        choice = input("Wybierz opcję: ").strip()
 
         if choice == "9":
             print("Koniec programu.")

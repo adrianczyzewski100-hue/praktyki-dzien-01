@@ -1,28 +1,27 @@
 """
-moduł odpowiedzialny za operacje wejścia/wyjścia na plikach json.
+moduł odpowiedzialny za trwałe przechowywanie danych w pliku json.
 """
 
 import json
 import os
-from config import TICKETS_FILE
 
 class Storage:
-    """klasa obsługująca odczyt i zapis danych z/do pliku json."""
-    def __init__(self, filename=TICKETS_FILE):
+    """klasa obsługująca odczyt i zapis danych z/do pliku JSON."""
+
+    def __init__(self, filename="tickets.json"):
         self.filename = filename
 
     def load(self):
-        """wczytuje listę słowników z pliku json. zwraca pustą listę w przypadku błędu."""
+        """odczytuje zgłoszenia z pliku json. zwraca pustą listę w przypadku braku pliku lub błędu."""
         if not os.path.exists(self.filename):
             return []
         try:
             with open(self.filename, "r", encoding="utf-8") as file:
                 return json.load(file)
-        except json.JSONDecodeError:
-            # w przypadku uszkodzonego pliku json zwracamy pustą listę
+        except (json.JSONDecodeError, IOError):
             return []
 
     def save(self, data):
-        """zapisuje przekazaną strukturę danych do pliku json."""
+        """zapisuje listę słowników do pliku json."""
         with open(self.filename, "w", encoding="utf-8") as file:
-            json.dump(data, file, indent=4, ensure_ascii=False)
+            json.dump(data, file, ensure_ascii=False, indent=4)

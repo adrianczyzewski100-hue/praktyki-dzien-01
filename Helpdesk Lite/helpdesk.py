@@ -1,6 +1,7 @@
 """
 moduł logiki biznesowej zarządzający kolekcją ticketów.
 """
+
 import csv
 from datetime import datetime
 from tickets import Ticket
@@ -14,7 +15,7 @@ PRIORITY_ORDER = {
 }
 
 class Helpdesk:
-    """klasa zarządzająca dodawaniem, usuwaniem, wyszukiwaniem, filtrowaniem i sortowaniem ticketów."""
+    """klasa zarządzająca dodawaniem, usuwaniem, wyszukiwaniem, filtrowaniem, sortowaniem i eksportem ticketów."""
 
     def __init__(self):
         self.storage = Storage()
@@ -41,7 +42,7 @@ class Helpdesk:
         return next((t for t in self.tickets if t.id == ticket_id), None)
 
     def change_status(self, ticket_id, new_status):
-        """zmienia status wskazanego ticketu (oraz ustawia date zamknięcia jeśli status to closed) i zapisuje zmiany."""
+        """zmienia status wskazanego ticketu (oraz ustawia datę zamknięcia jeśli status to closed) i zapisuje zmiany."""
         ticket = self.find_ticket(ticket_id)
         if ticket:
             if new_status.lower() == "closed":
@@ -93,13 +94,14 @@ class Helpdesk:
         """generuje raport w formacie csv czytelnym dla programu excel."""
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         suffix = "otwarte" if open_only else "wszystkie"
-        filename = f"raport ticketow_{suffix}_{timestamp}.csv"
+        filename = f"raport_ticketow_{suffix}_{timestamp}.csv"
 
         tickets_to_export = self.get_open_tickets() if open_only else self.get_all_tickets()
-        #naglowki czytelne dla czlowieka w jezyku polskim
-        headers = ["ID", "Użytkownik", "Opis", "Status", "priorytet", "Data utworzenia", "Data zamknięcia"]
 
-        #uzycie utf-8-sig oraz separatora ";" ulatwia automatyczne otwarcie w excelu
+        # nagłówki czytelne dla człowieka w języku polskim
+        headers = ["ID", "Użytkownik", "Opis", "Status", "Priorytet", "Data utworzenia", "Data zamknięcia"]
+
+        # użycie utf-8-sig (z bom) oraz separatora ';' ułatwia automatyczne otwarcie w excelu
         with open(filename, "w", newline="", encoding="utf-8-sig") as file:
             writer = csv.writer(file, delimiter=";")
             writer.writerow(headers)
