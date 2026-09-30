@@ -101,7 +101,7 @@ class Helpdesk:
         # nagłówki czytelne dla człowieka w języku polskim
         headers = ["ID", "Użytkownik", "Opis", "Status", "Priorytet", "Data utworzenia", "Data zamknięcia"]
 
-        # użycie utf-8-sig (z bom) oraz separatora ';' ułatwia automatyczne otwarcie w excelu
+        # użycie utf-8-sig oraz separatora ';' ułatwia automatyczne otwarcie w excelu
         with open(filename, "w", newline="", encoding="utf-8-sig") as file:
             writer = csv.writer(file, delimiter=";")
             writer.writerow(headers)

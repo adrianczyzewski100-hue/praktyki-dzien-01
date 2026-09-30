@@ -1,3 +1,1 @@
-dzien 9 
-wszystko dziala
-pliki sie eksportuja bez problemow
+dzien 11 rekord to jest jedna wartosc a kolumna moze miec wiele rekordow
