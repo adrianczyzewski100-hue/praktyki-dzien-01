@@ -1,155 +1,171 @@
-"""
-główny moduł aplikacji obsługujący interfejs użytkownika w konsoli.
-"""
-
+import sys
 from helpdesk import Helpdesk
-from validators import validate_user, validate_description, validate_priority
 
-def get_ticket_id(message):
-    """pobiera od użytkownika liczbę całkowitą (id). obsługuje błąd konwersji."""
+def print_tickets_table(tickets):
+    if not tickets:
+        print("\nbrak zgłoszeń do wyświetlenia.\n")
+        return
+
+    print("\n" + "=" * 105)
+    print(f"{'ID':<4} | {'Użytkownik':<16} | {'Dział':<12} | {'Priorytet':<9} | {'Status':<8} | {'Opis':<25} | {'Data dodania'}")
+    print("=" * 105)
+    for t in tickets:
+        desc = t['description'] if len(t['description']) <= 25 else t['description'][:22] + "..."
+        print(f"{t['id']:<4} | {t['user_name']:<16} | {t['department']:<12} | {t['priority']:<9} | {t['status']:<8} | {desc:<25} | {t['created_at']}")
+    print("=" * 105 + "\n")
+
+def print_users_table(users):
+    if not users:
+        print("\nbrak użytkowników w bazie.\n")
+        return
+
+    print("\n" + "=" * 45)
+    print(f"{'ID':<4} | {'Nazwa użytkownika':<20} | {'Dział':<15}")
+    print("=" * 45)
+    for u in users:
+        print(f"{u['id']:<4} | {u['name']:<20} | {u['department']:<15}")
+    print("=" * 45 + "\n")
+
+def select_user_prompt(helpdesk):
+    users = helpdesk.get_users()
+    if not users:
+        print("\nbrak użytkowników w bazie. najpierw dodaj użytkownika.")
+        name = input("podaj nazwę nowego użytkownika: ").strip()
+        dept = input("podaj dział: ").strip()
+        if not name or not dept:
+            print("anulowano.")
+            return None
+        user = helpdesk.add_user(name, dept)
+        return user["id"]
+
+    print_users_table(users)
     try:
-        return int(input(message))
+        user_id = int(input("podaj ID użytkownika: "))
+        if any(u["id"] == user_id for u in users):
+            return user_id
+        print("nie znaleziono użytkownika o takim ID.")
     except ValueError:
-        print("Błąd: wpisano tekst zamiast liczby.")
-        return None
+        print("niepoprawne ID.")
+    return None
 
-def display_menu():
-    """wyświetla opcje menu głównego."""
-    print("\nMenu Helpdesk Lite v0.5:")
-    print("1. Dodaj ticket")
-    print("2. Znajdź ticket po ID")
-    print("3. Zmień status ticketu")
-    print("4. Wyświetl wszystkie tickety")
-    print("5. Wyświetl tylko otwarte tickety")
-    print("6. Filtruj i sortuj tickety")
-    print("7. Usuń ticket")
-    print("8. Eksportuj raport do CSV")
-    print("9. Wyjście")
+def handle_add_user(helpdesk):
+    name = input("podaj nazwę użytkownika: ").strip()
+    dept = input("podaj dział: ").strip()
+    if name and dept:
+        try:
+            u = helpdesk.add_user(name, dept)
+            print(f"dodano użytkownika: {u['name']} (ID: {u['id']})")
+        except Exception as e:
+            print(f"błąd podczas dodawania użytkownika: {e}")
+    else:
+        print("pola nie mogą być puste.")
 
-def handle_add(helpdesk):
-    """obsługuje interaktywny proces dodawania nowego ticketu."""
-    user = input("Podaj nazwę użytkownika: ").strip()
-    if not validate_user(user):
-        print("Błąd: nazwa użytkownika nie może być pusta.")
+def handle_add_ticket(helpdesk):
+    user_id = select_user_prompt(helpdesk)
+    if not user_id:
         return
+    desc = input("podaj opis zgłoszenia: ").strip()
+    prio = input("podaj priorytet (low/medium/high): ").strip().lower()
+    if prio not in ["low", "medium", "high"]:
+        prio = "medium"
+    if desc:
+        t = helpdesk.add_ticket(user_id, desc, prio)
+        print(f"utworzono ticket nr {t['id']}")
+    else:
+        print("opis nie może być pusty.")
 
-    description = input("Podaj opis problemu: ").strip()
-    if not validate_description(description):
-        print("Błąd: opis problemu nie może być pusty.")
-        return
+def handle_find_ticket(helpdesk):
+    try:
+        t_id = int(input("podaj ID ticketu: "))
+        t = helpdesk.find_ticket(t_id)
+        if t:
+            print_tickets_table([t])
+        else:
+            print("nie znaleziono ticketu.")
+    except ValueError:
+        print("niepoprawne ID.")
 
-    priority = input("Podaj priorytet (low/medium/high): ").strip().lower()
-    if not validate_priority(priority):
-        print("Błąd: priorytet musi być low/medium/high.")
-        return
-
-    ticket = helpdesk.add_ticket(user, description, priority)
-    print(f"Ticket {ticket.id} został dodany z datą: {ticket.created_at}")
-
-def handle_find(helpdesk):
-    """obsługuje wyszukiwanie ticketu po id."""
-    ticket_id = get_ticket_id("Podaj ID ticketu: ")
-    if ticket_id is not None:
-        ticket = helpdesk.find_ticket(ticket_id)
-        print(ticket if ticket else "Nie znaleziono ticketu.")
+def handle_tickets_by_user(helpdesk):
+    users = helpdesk.get_users()
+    print_users_table(users)
+    try:
+        u_id = int(input("podaj ID użytkownika: "))
+        tickets = helpdesk.get_tickets_by_user(u_id)
+        print_tickets_table(tickets)
+    except ValueError:
+        print("niepoprawne ID.")
 
 def handle_change_status(helpdesk):
-    """obsługuje zmianę statusu zgłoszenia."""
-    ticket_id = get_ticket_id("Podaj ID ticketu: ")
-    if ticket_id is not None:
-        new_status = input("Podaj nowy status (np. closed/open): ").strip()
-        if helpdesk.change_status(ticket_id, new_status):
-            print(f"Status ticketu {ticket_id} został zmieniony.")
+    try:
+        t_id = int(input("podaj ID ticketu: "))
+        status = input("podaj nowy status (open/closed): ").strip().lower()
+        if helpdesk.change_status(t_id, status):
+            print("zmieniono status.")
         else:
-            print("Nie znaleziono ticketu.")
+            print("nie znaleziono ticketu.")
+    except ValueError:
+        print("niepoprawne ID.")
 
-def handle_show_all(helpdesk):
-    """wyświetla wszystkie zgłoszenia z bazy."""
-    tickets = helpdesk.get_all_tickets()
-    if not tickets:
-        print("Brak ticketów.")
-        return
-    for t in tickets:
-        print(t)
-
-def handle_show_open(helpdesk):
-    """wyświetla wyłącznie otwarte zgłoszenia."""
-    tickets = helpdesk.get_open_tickets()
-    if not tickets:
-        print("Brak otwartych ticketów.")
-        return
-    for t in tickets:
-        print(t)
-
-def handle_filter_and_sort(helpdesk):
-    """obsługuje filtrowanie oraz opcjonalne sortowanie zgłoszeń."""
-    status = input("Podaj status do filtrowania (lub enter aby pominąć): ").strip()
-    priority = input("Podaj priorytet do filtrowania (low/medium/high lub enter): ").strip()
-    open_only = input("Czy pokazać tylko otwarte? (t/n): ").strip().lower() == "t"
-
-    filtered = helpdesk.filter_tickets(
-        status=status if status else None,
-        priority=priority if priority else None,
-        open_only=open_only
-    )
-
-    print("\nOpcje sortowania:")
-    print("1. Sortuj po dacie utworzenia")
-    print("2. Sortuj po priorytecie (high -> low)")
-    print("3. Bez sortowania")
-    sort_choice = input("Wybierz opcję sortowania: ").strip()
-
-    if sort_choice == "1":
-        filtered = helpdesk.sort_tickets(filtered, by="created_at")
-    elif sort_choice == "2":
-        filtered = helpdesk.sort_tickets(filtered, by="priority")
-
-    if not filtered:
-        print("Brak ticketów spełniających kryteria.")
-        return
-    for t in filtered:
-        print(t)
-
-def handle_delete(helpdesk):
-    """obsługuje usuwanie zgłoszenia z bazy."""
-    ticket_id = get_ticket_id("Podaj ID ticketu do usunięcia: ")
-    if ticket_id is not None:
-        if helpdesk.delete_ticket(ticket_id):
-            print(f"Ticket {ticket_id} został usunięty.")
+def handle_delete_ticket(helpdesk):
+    try:
+        t_id = int(input("podaj ID ticketu do usunięcia: "))
+        if helpdesk.delete_ticket(t_id):
+            print("usunięto ticket.")
         else:
-            print("Nie znaleziono ticketu.")
+            print("nie znaleziono ticketu.")
+    except ValueError:
+        print("niepoprawne ID.")
 
 def handle_export(helpdesk):
-    """obsługuje eksportowanie zgłoszeń do pliku csv."""
-    open_only = input("Czy wyeksportować tylko otwarte zgłoszenia? (t/n): ").strip().lower() == "t"
+    mode = input("eksportować tylko otwarte? (t/n): ").strip().lower()
+    open_only = mode == 't'
     filename, count = helpdesk.export_to_csv(open_only=open_only)
-    print(f"Pomyślnie wyeksportowano {count} zgłoszeń do pliku: {filename}")
+    print(f"wyeksportowano {count} zgłoszeń do pliku {filename}")
 
 def main():
-    """główna pętla sterująca aplikacją."""
     helpdesk = Helpdesk()
-    actions = {
-        "1": lambda: handle_add(helpdesk),
-        "2": lambda: handle_find(helpdesk),
-        "3": lambda: handle_change_status(helpdesk),
-        "4": lambda: handle_show_all(helpdesk),
-        "5": lambda: handle_show_open(helpdesk),
-        "6": lambda: handle_filter_and_sort(helpdesk),
-        "7": lambda: handle_delete(helpdesk),
-        "8": lambda: handle_export(helpdesk),
-    }
 
     while True:
-        display_menu()
-        choice = input("Wybierz opcję: ").strip()
+        print("--- Helpdesk Lite v0.6 ---")
+        print("1. dodaj użytkownika")
+        print("2. wyświetl użytkowników")
+        print("3. dodaj ticket")
+        print("4. znajdź ticket po ID")
+        print("5. wyświetl tickety wybranego użytkownika")
+        print("6. zmień status ticketu")
+        print("7. wyświetl wszystkie tickety")
+        print("8. wyświetl tylko otwarte tickety")
+        print("9. usuń ticket")
+        print("10. eksportuj raport do CSV")
+        print("0. wyjście")
 
-        if choice == "9":
-            print("Koniec programu.")
-            break
-        elif choice in actions:
-            actions[choice]()
+        choice = input("wybierz opcję: ").strip()
+
+        if choice == "1":
+            handle_add_user(helpdesk)
+        elif choice == "2":
+            print_users_table(helpdesk.get_users())
+        elif choice == "3":
+            handle_add_ticket(helpdesk)
+        elif choice == "4":
+            handle_find_ticket(helpdesk)
+        elif choice == "5":
+            handle_tickets_by_user(helpdesk)
+        elif choice == "6":
+            handle_change_status(helpdesk)
+        elif choice == "7":
+            print_tickets_table(helpdesk.get_all_tickets())
+        elif choice == "8":
+            print_tickets_table(helpdesk.get_open_tickets())
+        elif choice == "9":
+            handle_delete_ticket(helpdesk)
+        elif choice == "10":
+            handle_export(helpdesk)
+        elif choice == "0":
+            print("koniec programu.")
+            sys.exit(0)
         else:
-            print("Nieprawidłowy wybór.")
+            print("nieprawidłowa opcja.\n")
 
 if __name__ == "__main__":
     main()
