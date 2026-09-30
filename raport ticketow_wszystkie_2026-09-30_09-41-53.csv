@@ -1,0 +1,5 @@
+﻿ID;Użytkownik;Opis;Status;priorytet;Data utworzenia;Data zamknięcia
+1;Jan Kowalski;nie dziala drukarka;closed;low;2026-09-24 10:30:25;
+3;Antek;nie dziala telefon;closed;high;2026-09-24 10:30:25;
+4;adam;nie dziala telewizor;closed;medium;2026-09-24 10:30:55;2026-09-24 10:31:21
+5;albert;nie dziala laptop;open;high;2026-09-30 09:35:29;
