@@ -1,5 +1,6 @@
 import sys
 from helpdesk import Helpdesk
+from database import DatabaseError
 
 def print_tickets_table(tickets):
     if not tickets:
@@ -26,28 +27,6 @@ def print_users_table(users):
         print(f"{u['id']:<4} | {u['name']:<20} | {u['department']:<15}")
     print("=" * 45 + "\n")
 
-def select_user_prompt(helpdesk):
-    users = helpdesk.get_users()
-    if not users:
-        print("\nbrak użytkowników w bazie. najpierw dodaj użytkownika.")
-        name = input("podaj nazwę nowego użytkownika: ").strip()
-        dept = input("podaj dział: ").strip()
-        if not name or not dept:
-            print("anulowano.")
-            return None
-        user = helpdesk.add_user(name, dept)
-        return user["id"]
-
-    print_users_table(users)
-    try:
-        user_id = int(input("podaj ID użytkownika: "))
-        if any(u["id"] == user_id for u in users):
-            return user_id
-        print("nie znaleziono użytkownika o takim ID.")
-    except ValueError:
-        print("niepoprawne ID.")
-    return None
-
 def handle_add_user(helpdesk):
     name = input("podaj nazwę użytkownika: ").strip()
     dept = input("podaj dział: ").strip()
@@ -55,24 +34,34 @@ def handle_add_user(helpdesk):
         try:
             u = helpdesk.add_user(name, dept)
             print(f"dodano użytkownika: {u['name']} (ID: {u['id']})")
-        except Exception as e:
-            print(f"błąd podczas dodawania użytkownika: {e}")
+        except ValueError as ve:
+            print(f"ostrzeżenie: {ve}")
+        except DatabaseError:
+            print("wystąpił błąd bazy danych. szczegóły zostały zapisane w logu.")
     else:
         print("pola nie mogą być puste.")
 
 def handle_add_ticket(helpdesk):
-    user_id = select_user_prompt(helpdesk)
-    if not user_id:
-        return
-    desc = input("podaj opis zgłoszenia: ").strip()
-    prio = input("podaj priorytet (low/medium/high): ").strip().lower()
-    if prio not in ["low", "medium", "high"]:
-        prio = "medium"
-    if desc:
-        t = helpdesk.add_ticket(user_id, desc, prio)
-        print(f"utworzono ticket nr {t['id']}")
-    else:
-        print("opis nie może być pusty.")
+    try:
+        users = helpdesk.get_users()
+        if not users:
+            print("\nbrak użytkowników w bazie. najpierw dodaj użytkownika.")
+            return
+        print_users_table(users)
+        user_id = int(input("podaj ID użytkownika: "))
+        desc = input("podaj opis zgłoszenia: ").strip()
+        prio = input("podaj priorytet (low/medium/high): ").strip().lower()
+        if prio not in ["low", "medium", "high"]:
+            prio = "medium"
+        if desc:
+            t = helpdesk.add_ticket(user_id, desc, prio)
+            print(f"utworzono ticket nr {t['id']}")
+        else:
+            print("opis nie może być pusty.")
+    except ValueError as ve:
+        print(f"błąd danych: {ve}")
+    except DatabaseError:
+        print("wystąpił błąd bazy danych. szczegóły zostały zapisane w logu.")
 
 def handle_find_ticket(helpdesk):
     try:
@@ -84,16 +73,8 @@ def handle_find_ticket(helpdesk):
             print("nie znaleziono ticketu.")
     except ValueError:
         print("niepoprawne ID.")
-
-def handle_tickets_by_user(helpdesk):
-    users = helpdesk.get_users()
-    print_users_table(users)
-    try:
-        u_id = int(input("podaj ID użytkownika: "))
-        tickets = helpdesk.get_tickets_by_user(u_id)
-        print_tickets_table(tickets)
-    except ValueError:
-        print("niepoprawne ID.")
+    except DatabaseError:
+        print("wystąpił błąd bazy danych. szczegóły zostały zapisane w logu.")
 
 def handle_change_status(helpdesk):
     try:
@@ -105,6 +86,8 @@ def handle_change_status(helpdesk):
             print("nie znaleziono ticketu.")
     except ValueError:
         print("niepoprawne ID.")
+    except DatabaseError:
+        print("wystąpił błąd bazy danych. szczegóły zostały zapisane w logu.")
 
 def handle_delete_ticket(helpdesk):
     try:
@@ -115,15 +98,15 @@ def handle_delete_ticket(helpdesk):
             print("nie znaleziono ticketu.")
     except ValueError:
         print("niepoprawne ID.")
-
-def handle_export(helpdesk):
-    mode = input("eksportować tylko otwarte? (t/n): ").strip().lower()
-    open_only = mode == 't'
-    filename, count = helpdesk.export_to_csv(open_only=open_only)
-    print(f"wyeksportowano {count} zgłoszeń do pliku {filename}")
+    except DatabaseError:
+        print("wystąpił błąd bazy danych. szczegóły zostały zapisane w logu.")
 
 def main():
-    helpdesk = Helpdesk()
+    try:
+        helpdesk = Helpdesk()
+    except DatabaseError:
+        print("nie udało się połączyć z bazą danych. sprawdź plik helpdesk.log.")
+        sys.exit(1)
 
     while True:
         print("--- Helpdesk Lite v0.6 ---")
@@ -131,41 +114,38 @@ def main():
         print("2. wyświetl użytkowników")
         print("3. dodaj ticket")
         print("4. znajdź ticket po ID")
-        print("5. wyświetl tickety wybranego użytkownika")
-        print("6. zmień status ticketu")
-        print("7. wyświetl wszystkie tickety")
-        print("8. wyświetl tylko otwarte tickety")
-        print("9. usuń ticket")
-        print("10. eksportuj raport do CSV")
+        print("5. zmień status ticketu")
+        print("6. wyświetl wszystkie tickety")
+        print("7. wyświetl tylko otwarte tickety")
+        print("8. usuń ticket")
         print("0. wyjście")
 
         choice = input("wybierz opcję: ").strip()
 
-        if choice == "1":
-            handle_add_user(helpdesk)
-        elif choice == "2":
-            print_users_table(helpdesk.get_users())
-        elif choice == "3":
-            handle_add_ticket(helpdesk)
-        elif choice == "4":
-            handle_find_ticket(helpdesk)
-        elif choice == "5":
-            handle_tickets_by_user(helpdesk)
-        elif choice == "6":
-            handle_change_status(helpdesk)
-        elif choice == "7":
-            print_tickets_table(helpdesk.get_all_tickets())
-        elif choice == "8":
-            print_tickets_table(helpdesk.get_open_tickets())
-        elif choice == "9":
-            handle_delete_ticket(helpdesk)
-        elif choice == "10":
-            handle_export(helpdesk)
-        elif choice == "0":
-            print("koniec programu.")
-            sys.exit(0)
-        else:
-            print("nieprawidłowa opcja.\n")
+        try:
+            if choice == "1":
+                handle_add_user(helpdesk)
+            elif choice == "2":
+                print_users_table(helpdesk.get_users())
+            elif choice == "3":
+                handle_add_ticket(helpdesk)
+            elif choice == "4":
+                handle_find_ticket(helpdesk)
+            elif choice == "5":
+                handle_change_status(helpdesk)
+            elif choice == "6":
+                print_tickets_table(helpdesk.get_all_tickets())
+            elif choice == "7":
+                print_tickets_table(helpdesk.get_open_tickets())
+            elif choice == "8":
+                handle_delete_ticket(helpdesk)
+            elif choice == "0":
+                print("koniec programu.")
+                sys.exit(0)
+            else:
+                print("nieprawidłowa opcja.\n")
+        except DatabaseError:
+            print("błąd bazy danych podczas wykonywania operacji. szczegóły w helpdesk.log.")
 
 if __name__ == "__main__":
     main()

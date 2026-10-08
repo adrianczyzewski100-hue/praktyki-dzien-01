@@ -1,0 +1,5 @@
+2026-10-08 09:17:30,375 - helpdesk - INFO - baza danych została pomyślnie zainicjalizowana.
+2026-10-08 09:17:43,323 - helpdesk - WARNING - nie znaleziono ticketu o ID 0
+2026-10-08 09:21:14,796 - helpdesk - INFO - baza danych została pomyślnie zainicjalizowana.
+2026-10-08 09:21:29,738 - helpdesk - INFO - dodano nowego użytkownika: Jan Kowalski (ID: 2)
+2026-10-08 09:21:41,286 - helpdesk - WARNING - odrzucono próbę dodania istniejącego użytkownika: Jan Kowalski
