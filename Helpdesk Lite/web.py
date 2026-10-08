@@ -1,57 +1,53 @@
-from flask import Flask
+from flask import Flask, render_template, request, redirect, url_for
 from helpdesk import Helpdesk
 from database import DatabaseError
 
+# inicjalizacja aplikacji webowej oraz pojedynczej instancji logiki biznesowej
 app = Flask(__name__)
 helpdesk = Helpdesk()
 
 @app.route("/")
 def home():
-    return "<h1>Helpdesk Lite Web v0.7</h1>"
+    # przekierowanie ze strony głównej bezpośrednio do widoku listy zgłoszeń
+    return redirect(url_for("list_tickets"))
 
 @app.route("/tickets")
 def list_tickets():
     try:
+        # pobranie zgłoszeń z bazy przez warstwę logiki (bez bezpośredniego SQL)
         tickets = helpdesk.get_all_tickets()
-        if not tickets:
-            return "<h1>Helpdesk Lite</h1><p>brak zgłoszeń w bazie.</p>"
-
-        rows = ""
-        for t in tickets:
-            rows += f"""
-            <tr>
-                <td>{t['id']}</td>
-                <td>{t['user_name']}</td>
-                <td>{t['department']}</td>
-                <td>{t['priority']}</td>
-                <td>{t['status']}</td>
-                <td>{t['description']}</td>
-                <td>{t['created_at']}</td>
-            </tr>
-            """
-
-        html = f"""
-        <h1>Lista zgłoszeń</h1>
-        <table border="1" cellpadding="6" cellspacing="0">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Użytkownik</th>
-                    <th>Dział</th>
-                    <th>Priorytet</th>
-                    <th>Status</th>
-                    <th>Opis</th>
-                    <th>Data utworzenia</th>
-                </tr>
-            </thead>
-            <tbody>
-                {rows}
-            </tbody>
-        </table>
-        """
-        return html
+        return render_template("tickets.html", tickets=tickets)
     except DatabaseError:
-        return "<h1>Błąd bazy danych</h1><p>szczegóły zostały zapisane w logu.</p>", 500
+        # bezpieczny komunikat dla użytkownika w przypadku awarii bazy
+        return "Błąd bazy danych.", 500
+
+@app.route("/tickets/new", methods=["GET", "POST"])
+def new_ticket():
+    if request.method == "POST":
+        # pobranie i oczyszczenie danych z formularza HTTP
+        user_id_raw = request.form.get("user_id")
+        description = request.form.get("description", "").strip()
+        priority = request.form.get("priority", "medium").strip().lower()
+
+        # walidacja obecności wymaganych pól po stronie serwera
+        if not user_id_raw or not description:
+            users = helpdesk.get_users()
+            return render_template("new_ticket.html", users=users, error="Użytkownik i opis są wymagani.")
+
+        try:
+            user_id = int(user_id_raw)
+            # przekazanie danych do istniejącej metody biznesowej
+            helpdesk.add_ticket(user_id, description, priority)
+            # wzorzec Post/Redirect/Get chroni przed ponownym wysłaniem danych przy odświeżeniu
+            return redirect(url_for("list_tickets"))
+        except (ValueError, DatabaseError) as e:
+            # ponowne wyrenderowanie formularza z powiadomieniem o błędzie
+            users = helpdesk.get_users()
+            return render_template("new_ticket.html", users=users, error=str(e))
+
+    # obsługa GET: pobranie listy użytkowników do rozwijanego menu w formularzu
+    users = helpdesk.get_users()
+    return render_template("new_ticket.html", users=users)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

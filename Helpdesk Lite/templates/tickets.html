@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Helpdesk Lite - Lista zgłoszeń</title>
+</head>
+<body>
+    <h1>Lista zgłoszeń</h1>
+    <p><a href="/tickets/new">Dodaj nowe zgłoszenie</a></p>
+
+    {% if tickets %}
+    <table border="1" cellpadding="6" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Użytkownik</th>
+                <th>Dział</th>
+                <th>Priorytet</th>
+                <th>Status</th>
+                <th>Opis</th>
+                <th>Data utworzenia</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in tickets %}
+            <tr>
+                <td>{{ t.id }}</td>
+                <td>{{ t.user_name }}</td>
+                <td>{{ t.department }}</td>
+                <td>{{ t.priority }}</td>
+                <td>{{ t.status }}</td>
+                <td>{{ t.description }}</td>
+                <td>{{ t.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Brak zgłoszeń w bazie.</p>
+    {% endif %}
+</body>
+</html>

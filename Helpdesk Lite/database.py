@@ -15,6 +15,7 @@ class Database:
 
     def _get_connection(self):
         conn = sqlite3.connect(self.db_name)
+        # wymuszenie sprawdzania kluczy obcych (foreign keys) przy każdym połączeniu
         conn.execute("PRAGMA foreign_keys = ON;")
         return conn
 
@@ -99,9 +100,12 @@ class Database:
             raise DatabaseError("nie udało się pobrać listy użytkowników.")
 
     def add_ticket(self, user_id, description, priority):
+        # weryfikacja istnienia relacji przed wstawieniem rekordu do bazy
         if not self.get_user_by_id(user_id):
             logger.warning(f"odrzucono dodanie ticketu: brak użytkownika o ID {user_id}")
             raise ValueError(f"użytkownik o ID {user_id} nie istnieje")
+
+        # dalej następuje bezpieczne zapytanie z parametrami (?) zapobiegające SQL Injection
 
         created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         query = """
